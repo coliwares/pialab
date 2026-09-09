@@ -1,0 +1,1234 @@
+<title>QA Dashboard · Rindegastos</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,500;0,6..12,600;0,6..12,700;0,6..12,800;1,6..12,400&display=swap">
+
+<style>
+  /* ── Tokens ─────────────────────────────────────────────── */
+  :root {
+    --brand:       #1B6EF3;
+    --brand-light: #EEF4FF;
+    --brand-dim:   #2563EB;
+    --bg:          #F4F7FB;
+    --surface:     #FFFFFF;
+    --border:      #DDE4EE;
+    --text:        #0F1C2E;
+    --text-2:      #4B6380;
+    --text-3:      #8BA0B8;
+    --up:          #16A34A;
+    --up-bg:       #DCFCE7;
+    --down:        #DC2626;
+    --down-bg:     #FEE2E2;
+    --warn:        #D97706;
+    --warn-bg:     #FEF3C7;
+    --crit:        #B91C1C;
+    --high:        #EA580C;
+    --medium:      #7C3AED;
+    --low:         #0891B2;
+    --r: 10px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:          #0B1220;
+      --surface:     #131D2E;
+      --border:      #1E2D42;
+      --text:        #E8F0FA;
+      --text-2:      #7FA3C8;
+      --text-3:      #4B6380;
+      --brand-light: #0E1E3F;
+      --up-bg:       #052E16;
+      --down-bg:     #450A0A;
+      --warn-bg:     #422006;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg:          #0B1220;
+    --surface:     #131D2E;
+    --border:      #1E2D42;
+    --text:        #E8F0FA;
+    --text-2:      #7FA3C8;
+    --text-3:      #4B6380;
+    --brand-light: #0E1E3F;
+    --up-bg:       #052E16;
+    --down-bg:     #450A0A;
+    --warn-bg:     #422006;
+  }
+
+  /* ── Base ───────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito Sans', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* ── Header ─────────────────────────────────────────────── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 28px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 800;
+    font-size: 16px;
+    color: var(--brand);
+    text-decoration: none;
+    letter-spacing: -.3px;
+  }
+
+  .logo svg { width: 24px; height: 24px; }
+
+  .header-mid {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-2);
+    font-size: 13px;
+  }
+
+  .header-sep { color: var(--border); }
+
+  .header-title {
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .badge-updated {
+    font-size: 11px;
+    color: var(--text-3);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-style: italic;
+  }
+
+  .btn-refresh {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-2);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+    font-family: inherit;
+  }
+  .btn-refresh:hover { border-color: var(--brand); color: var(--brand); }
+  .btn-refresh.loading { opacity: .6; pointer-events: none; }
+
+  .btn-theme {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-2);
+    cursor: pointer;
+    display: grid; place-items: center;
+    font-size: 14px;
+    font-family: inherit;
+  }
+
+  /* ── Controls bar ───────────────────────────────────────── */
+  .controls {
+    padding: 12px 28px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .controls-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .controls-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    white-space: nowrap;
+    min-width: 52px;
+  }
+
+  .pill-group {
+    display: flex;
+    gap: 4px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 3px;
+    flex-wrap: wrap;
+  }
+
+  .pill {
+    padding: 5px 14px;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    color: var(--text-2);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .pill.active {
+    background: var(--brand);
+    color: #fff;
+    box-shadow: 0 1px 4px rgba(27,110,243,.35);
+  }
+  .pill:not(.active):hover { background: var(--brand-light); color: var(--brand); }
+
+  /* type pills — larger, more prominent */
+  .pill-group.types .pill {
+    padding: 5px 16px;
+    font-size: 12.5px;
+  }
+
+  .pill-count {
+    display: inline-block;
+    background: rgba(255,255,255,.25);
+    border-radius: 10px;
+    padding: 0 5px;
+    font-size: 10px;
+    margin-left: 3px;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  .pill:not(.active) .pill-count {
+    background: var(--border);
+    color: var(--text-3);
+  }
+
+  .select-filter {
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 12px;
+    font-family: inherit;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  /* ── Main ────────────────────────────────────────────────── */
+  main { padding: 20px 28px 48px; }
+
+  /* ── Section ─────────────────────────────────────────────── */
+  .section { margin-bottom: 28px; }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--brand);
+    white-space: nowrap;
+  }
+
+  .section-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── KPI grid ────────────────────────────────────────────── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+  }
+
+  .kpi-grid.wide {
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  }
+
+  .kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .kpi-label {
+    font-size: 11px;
+    color: var(--text-2);
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  .kpi-value {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.5px;
+    line-height: 1.1;
+  }
+
+  .kpi-value.brand { color: var(--brand); }
+
+  .kpi-delta {
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .kpi-delta.up   { color: var(--up); }
+  .kpi-delta.down { color: var(--down); }
+  .kpi-delta.neutral { color: var(--text-3); }
+
+  /* ── Charts row ──────────────────────────────────────────── */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 900px) {
+    .charts-grid { grid-template-columns: 1fr; }
+  }
+
+  .charts-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  @media (max-width: 1100px) {
+    .charts-grid-3 { grid-template-columns: 1fr 1fr; }
+  }
+
+  @media (max-width: 700px) {
+    .charts-grid-3 { grid-template-columns: 1fr; }
+  }
+
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 20px;
+  }
+
+  .chart-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 3px;
+  }
+
+  .chart-sub {
+    font-size: 11px;
+    color: var(--text-3);
+    margin-bottom: 16px;
+  }
+
+  .chart-wrap {
+    position: relative;
+    width: 100%;
+  }
+
+  /* ── Table ───────────────────────────────────────────────── */
+  .table-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    overflow: hidden;
+  }
+
+  .table-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .table-title { font-size: 13px; font-weight: 700; }
+
+  .table-search {
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 12px;
+    font-family: inherit;
+    width: 220px;
+  }
+
+  .table-wrap { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  th {
+    text-align: left;
+    padding: 10px 14px;
+    background: var(--bg);
+    color: var(--text-3);
+    font-weight: 700;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  th:hover { color: var(--brand); }
+
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--brand-light); }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  .tag-web      { background: #DBEAFE; color: #1D4ED8; }
+  .tag-mobile   { background: #E0E7FF; color: #4338CA; }
+  .tag-mejoras  { background: #D1FAE5; color: #065F46; }
+  .tag-iter     { background: #FEF3C7; color: #92400E; }
+  .tag-incr     { background: #FCE7F3; color: #9D174D; }
+  .tag-rev      { background: #F3F4F6; color: #374151; }
+  .tag-release  { background: #EDE9FE; color: #5B21B6; }
+
+  .tag-alta   { background: #FEE2E2; color: #B91C1C; }
+  .tag-media  { background: #FEF3C7; color: #92400E; }
+  .tag-baja   { background: #D1FAE5; color: #065F46; }
+  .tag-listo  { background: #D1FAE5; color: #065F46; }
+  .tag-noapl  { background: #F3F4F6; color: #374151; }
+
+  .num { text-align: right; }
+
+  /* ── Insight box ─────────────────────────────────────────── */
+  .insight-box {
+    background: var(--brand-light);
+    border-left: 3px solid var(--brand);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    font-size: 12px;
+    color: var(--text-2);
+    line-height: 1.6;
+    margin-top: 12px;
+  }
+
+  .insight-box strong { color: var(--brand); }
+
+  /* ── Empty state ─────────────────────────────────────────── */
+  .empty { text-align: center; padding: 40px; color: var(--text-3); font-size: 13px; }
+
+  /* ── Severity bar ────────────────────────────────────────── */
+  .sev-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .sev-label { width: 60px; font-size: 11px; color: var(--text-2); font-weight: 700; }
+  .sev-bar-wrap { flex: 1; background: var(--border); border-radius: 4px; height: 8px; overflow: hidden; }
+  .sev-bar { height: 100%; border-radius: 4px; transition: width .5s; }
+  .sev-count { width: 36px; text-align: right; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  /* ── Responsive ──────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    header { padding: 0 14px; }
+    .controls { padding: 10px 14px; }
+    main { padding: 14px 14px 40px; }
+    .kpi-value { font-size: 22px; }
+  }
+</style>
+
+<!-- ═══════════════════════════════════ MARKUP ═════════════════════════ -->
+
+<header>
+  <a class="logo" href="#">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="24" height="24" rx="5" fill="#1B6EF3"/>
+      <polyline points="5,12 10,17 19,8" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    rindegastos
+  </a>
+  <div class="header-mid">
+    <span>QA</span>
+    <span class="header-sep">›</span>
+    <span class="header-title">Dashboard de métricas</span>
+  </div>
+  <div class="header-actions">
+    <span class="badge-updated" id="lastUpdated">Cargando...</span>
+    <button class="btn-refresh" id="btnRefresh" onclick="refreshData()">
+      <span id="refreshIcon">↻</span> Actualizar
+    </button>
+    <button class="btn-theme" onclick="toggleTheme()" title="Cambiar tema">◑</button>
+  </div>
+</header>
+
+<!-- Controls: período + tipo de proyecto -->
+<div class="controls">
+  <div class="controls-row">
+    <span class="controls-label">Período</span>
+    <div class="pill-group" id="periodGroup">
+      <button class="pill" data-period="Q1 2025" onclick="setPeriod(this)">Q1 2025</button>
+      <button class="pill" data-period="Q2 2025" onclick="setPeriod(this)">Q2 2025</button>
+      <button class="pill" data-period="Q3 2025" onclick="setPeriod(this)">Q3 2025</button>
+      <button class="pill active" data-period="Q4 2025" onclick="setPeriod(this)">Q4 2025</button>
+      <button class="pill" data-period="2025" onclick="setPeriod(this)">Año 2025</button>
+      <button class="pill" data-period="Q1 2026" onclick="setPeriod(this)">Q1 2026</button>
+    </div>
+  </div>
+  <div class="controls-row">
+    <span class="controls-label">Tipo</span>
+    <div class="pill-group types" id="typeGroup">
+      <button class="pill active" data-type="" onclick="setType(this)">Todos <span class="pill-count" id="cnt-all">—</span></button>
+      <button class="pill" data-type="Web" onclick="setType(this)">Web <span class="pill-count" id="cnt-web">—</span></button>
+      <button class="pill" data-type="Mobile" onclick="setType(this)">Mobile <span class="pill-count" id="cnt-mobile">—</span></button>
+      <button class="pill" data-type="Release" onclick="setType(this)">Release <span class="pill-count" id="cnt-release">—</span></button>
+      <button class="pill" data-type="Incremental" onclick="setType(this)">Incremental <span class="pill-count" id="cnt-incremental">—</span></button>
+      <button class="pill" data-type="Revisión general" onclick="setType(this)">Revisión general <span class="pill-count" id="cnt-revision">—</span></button>
+    </div>
+    <select class="select-filter" id="complexityFilter" onchange="applyFilters()">
+      <option value="">Todas las complejidades</option>
+      <option value="Alta">Alta</option>
+      <option value="Media">Media</option>
+      <option value="Baja">Baja</option>
+    </select>
+  </div>
+</div>
+
+<main>
+  <!-- GENERAL -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-label">General</span>
+      <div class="section-line"></div>
+    </div>
+    <div class="kpi-grid" id="kpiGeneral"></div>
+  </div>
+
+  <!-- EJECUCIÓN -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-label">Ejecución de pruebas</span>
+      <div class="section-line"></div>
+    </div>
+    <div class="kpi-grid wide" id="kpiEjecucion"></div>
+
+    <div style="margin-top:16px;" class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-title">Pruebas por estado de ejecución</div>
+        <div class="chart-sub">Distribución acumulada por trimestre</div>
+        <div class="chart-wrap" style="height:220px;">
+          <canvas id="chartEstados"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Distribución por tipo</div>
+        <div class="chart-sub">N° proyectos según tipo</div>
+        <div class="chart-wrap" style="height:220px;">
+          <canvas id="chartTipos"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TICKETS -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-label">Gestión de tickets QA</span>
+      <div class="section-line"></div>
+    </div>
+    <div class="kpi-grid wide" id="kpiTickets"></div>
+
+    <div style="margin-top:16px;" class="charts-grid-3">
+      <div class="chart-card">
+        <div class="chart-title">Impacto de defectos</div>
+        <div class="chart-sub">Total por severidad</div>
+        <div id="sevBars" style="margin-top:8px;"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Promedio tasa de defectos</div>
+        <div class="chart-sub">Por trimestre y tipo</div>
+        <div class="chart-wrap" style="height:180px;">
+          <canvas id="chartTasaDefectos"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Promedio tiempo de ciclo de pruebas</div>
+        <div class="chart-sub">Días hábiles por trimestre</div>
+        <div class="chart-wrap" style="height:180px;">
+          <canvas id="chartCiclo"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROYECTOS TABLE -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-label">Proyectos</span>
+      <div class="section-line"></div>
+    </div>
+    <div class="table-card">
+      <div class="table-head">
+        <span class="table-title" id="tableCount">— proyectos</span>
+        <input class="table-search" type="search" placeholder="Buscar proyecto…" oninput="filterTable(this.value)" id="tableSearch">
+      </div>
+      <div class="table-wrap">
+        <table id="projTable">
+          <thead>
+            <tr>
+              <th onclick="sortTable('proyecto')">Proyecto ↕</th>
+              <th onclick="sortTable('tipo')">Tipo ↕</th>
+              <th onclick="sortTable('complejidad')">Complejidad ↕</th>
+              <th onclick="sortTable('qFin')">Q Fin ↕</th>
+              <th onclick="sortTable('tiempoCiclo')" class="num">Ciclo (días) ↕</th>
+              <th onclick="sortTable('cpEjecutado')" class="num">CP Ejec. ↕</th>
+              <th onclick="sortTable('cpAprobado')" class="num">Aprobado ↕</th>
+              <th onclick="sortTable('cpFallido')" class="num">Fallido ↕</th>
+              <th onclick="sortTable('defectos')" class="num">Defectos ↕</th>
+              <th onclick="sortTable('totalTasaDefectos')" class="num">Tasa def. ↕</th>
+              <th onclick="sortTable('tasaDevolucion')" class="num">Tasa dev. ↕</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="projBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ═══════════════════════ CHART.JS ═════════════════════════════════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<script>
+// ════════════════════════════════════════════════════════════════════════
+// DATA — extraída del Google Sheet (actualizar con refresh)
+// ════════════════════════════════════════════════════════════════════════
+const SHEET_ID = '1LnUuP1y0ZhNp-Xd_P2ubtWHgb0tM00l3TPd_aBvLOT0';
+const SHEET_GID_DETAIL = '0';
+
+const ALL_PROJECTS = [
+  {proyecto:"Gastos por WhatsApp",complejidad:"Media",tipo:"Web",qInicio:"Q4 2024",qFin:"Q1 2025",tiempoCiclo:27,statusQA:"Listo",cpPlanificado:99,numIteraciones:4,cpEjecutado:180,cpAprobado:172,cpAprobadoObs:2,cpFallido:6,cpPendiente:0,cpBloqueado:0,cpNA:3,cpNoDev:1,defectos:11,mejoras:0,totalTickets:11,ticketsValidos:11,defCritical:0,defHigh:3,defMedium:5,defLow:3,tasaDevolucion:0,promDiasCicloTicket:8,totalTasaDefectos:0},
+  {proyecto:"RindePay (Rev. General)",complejidad:"Alta",tipo:"Web",qInicio:"Q1 2025",qFin:"Q1 2025",tiempoCiclo:4,statusQA:"Listo",cpPlanificado:157,numIteraciones:1,cpEjecutado:138,cpAprobado:119,cpAprobadoObs:6,cpFallido:13,cpPendiente:0,cpBloqueado:4,cpNA:15,cpNoDev:0,defectos:9,mejoras:8,totalTickets:17,ticketsValidos:17,defCritical:0,defHigh:3,defMedium:3,defLow:3,tasaDevolucion:0,promDiasCicloTicket:0,totalTasaDefectos:6.52},
+  {proyecto:"Release 9.4.0",complejidad:"Alta",tipo:"Mobile",qInicio:"Q1 2025",qFin:"Q1 2025",tiempoCiclo:7,statusQA:"Listo",cpPlanificado:247,numIteraciones:7,cpEjecutado:259,cpAprobado:215,cpAprobadoObs:7,cpFallido:37,cpPendiente:0,cpBloqueado:21,cpNA:25,cpNoDev:23,defectos:21,mejoras:1,totalTickets:25,ticketsValidos:22,defCritical:0,defHigh:12,defMedium:5,defLow:4,tasaDevolucion:0,promDiasCicloTicket:21,totalTasaDefectos:8},
+  {proyecto:"ARCA",complejidad:"Baja",tipo:"Web",qInicio:"Q1 2025",qFin:"Q1 2025",tiempoCiclo:4,statusQA:"Listo",cpPlanificado:32,numIteraciones:2,cpEjecutado:28,cpAprobado:26,cpAprobadoObs:0,cpFallido:2,cpPendiente:0,cpBloqueado:0,cpNA:4,cpNoDev:0,defectos:2,mejoras:0,totalTickets:4,ticketsValidos:2,defCritical:0,defHigh:0,defMedium:0,defLow:2,tasaDevolucion:0,promDiasCicloTicket:15,totalTasaDefectos:7.14},
+  {proyecto:"RindePay (Release 5)",complejidad:"Alta",tipo:"Web",qInicio:"Q1 2025",qFin:"Q1 2025",tiempoCiclo:27,statusQA:"Listo",cpPlanificado:295,numIteraciones:3,cpEjecutado:303,cpAprobado:275,cpAprobadoObs:6,cpFallido:22,cpPendiente:0,cpBloqueado:0,cpNA:22,cpNoDev:12,defectos:28,mejoras:1,totalTickets:31,ticketsValidos:29,defCritical:0,defHigh:4,defMedium:15,defLow:9,tasaDevolucion:0.11,promDiasCicloTicket:12,totalTasaDefectos:12.21},
+  {proyecto:"Validación proveedores Colombia RUES",complejidad:"Baja",tipo:"Web",qInicio:"Q1 2025",qFin:"Q1 2025",tiempoCiclo:2,statusQA:"Listo",cpPlanificado:32,numIteraciones:2,cpEjecutado:27,cpAprobado:26,cpAprobadoObs:0,cpFallido:1,cpPendiente:0,cpBloqueado:6,cpNA:6,cpNoDev:0,defectos:2,mejoras:0,totalTickets:3,ticketsValidos:2,defCritical:0,defHigh:1,defMedium:1,defLow:0,tasaDevolucion:0,promDiasCicloTicket:3,totalTasaDefectos:7.41},
+  {proyecto:"Mejoras Q1 2025",complejidad:"Media",tipo:"Mejoras",qInicio:"Q1 2025",qFin:"Q1 2025",tiempoCiclo:1,statusQA:"Listo",cpPlanificado:7,numIteraciones:1,cpEjecutado:7,cpAprobado:6,cpAprobadoObs:1,cpFallido:0,cpPendiente:0,cpBloqueado:0,cpNA:0,cpNoDev:0,defectos:0,mejoras:0,totalTickets:0,ticketsValidos:0,defCritical:0,defHigh:0,defMedium:0,defLow:0,tasaDevolucion:0,promDiasCicloTicket:0,totalTasaDefectos:0},
+  {proyecto:"2FDA y contraseña",complejidad:"Alta",tipo:"Web",qInicio:"Q1 2025",qFin:"Q1 2025",tiempoCiclo:19,statusQA:"Listo",cpPlanificado:87,numIteraciones:4,cpEjecutado:143,cpAprobado:114,cpAprobadoObs:7,cpFallido:22,cpPendiente:68,cpBloqueado:31,cpNA:8,cpNoDev:0,defectos:18,mejoras:1,totalTickets:25,ticketsValidos:19,defCritical:5,defHigh:8,defMedium:4,defLow:1,tasaDevolucion:0,promDiasCicloTicket:5,totalTasaDefectos:12.59},
+  {proyecto:"Fondos 2.0",complejidad:"Alta",tipo:"Web",qInicio:"Q4 2024",qFin:"Q1 2025",tiempoCiclo:58,statusQA:"Listo",cpPlanificado:373,numIteraciones:4,cpEjecutado:606,cpAprobado:478,cpAprobadoObs:20,cpFallido:108,cpPendiente:85,cpBloqueado:63,cpNA:9,cpNoDev:10,defectos:92,mejoras:4,totalTickets:99,ticketsValidos:96,defCritical:4,defHigh:20,defMedium:37,defLow:31,tasaDevolucion:0.13,promDiasCicloTicket:17,totalTasaDefectos:12.54},
+  {proyecto:"Release 9.5.0",complejidad:"Alta",tipo:"Mobile",qInicio:"Q1 2025",qFin:"Q1 2025",tiempoCiclo:14,statusQA:"Listo",cpPlanificado:277,numIteraciones:8,cpEjecutado:423,cpAprobado:381,cpAprobadoObs:17,cpFallido:25,cpPendiente:29,cpBloqueado:39,cpNA:13,cpNoDev:4,defectos:45,mejoras:1,totalTickets:50,ticketsValidos:46,defCritical:1,defHigh:12,defMedium:21,defLow:11,tasaDevolucion:0.13,promDiasCicloTicket:4,totalTasaDefectos:11},
+  {proyecto:"Registro de acciones (Etapa 2)",complejidad:"Baja",tipo:"Iteración",qInicio:"Q1 2025",qFin:"Q2 2025",tiempoCiclo:65,statusQA:"Listo",cpPlanificado:284,numIteraciones:2,cpEjecutado:154,cpAprobado:130,cpAprobadoObs:0,cpFallido:24,cpPendiente:0,cpBloqueado:0,cpNA:2,cpNoDev:1,defectos:17,mejoras:0,totalTickets:19,ticketsValidos:17,defCritical:0,defHigh:1,defMedium:4,defLow:12,tasaDevolucion:0.06,promDiasCicloTicket:58,totalTasaDefectos:12.34},
+  {proyecto:"Mejoras Q2 2025",complejidad:"Media",tipo:"Mejoras",qInicio:"Q2 2025",qFin:"Q2 2025",tiempoCiclo:21,statusQA:"Listo",cpPlanificado:152,numIteraciones:5,cpEjecutado:188,cpAprobado:143,cpAprobadoObs:13,cpFallido:32,cpPendiente:2,cpBloqueado:17,cpNA:3,cpNoDev:9,defectos:28,mejoras:2,totalTickets:33,ticketsValidos:30,defCritical:1,defHigh:10,defMedium:12,defLow:5,tasaDevolucion:0.07,promDiasCicloTicket:12,totalTasaDefectos:15.56},
+  {proyecto:"RindeConnect Estado de cuenta",complejidad:"Media",tipo:"Web",qInicio:"Q2 2025",qFin:"Q2 2025",tiempoCiclo:33,statusQA:"Listo",cpPlanificado:199,numIteraciones:6,cpEjecutado:235,cpAprobado:212,cpAprobadoObs:4,cpFallido:19,cpPendiente:2,cpBloqueado:0,cpNA:6,cpNoDev:7,defectos:19,mejoras:5,totalTickets:25,ticketsValidos:24,defCritical:0,defHigh:7,defMedium:11,defLow:1,tasaDevolucion:0,promDiasCicloTicket:10,totalTasaDefectos:8.09},
+  {proyecto:"Release 9.6.0",complejidad:"Alta",tipo:"Mobile",qInicio:"Q2 2025",qFin:"Q2 2025",tiempoCiclo:31,statusQA:"Listo",cpPlanificado:171,numIteraciones:10,cpEjecutado:423,cpAprobado:361,cpAprobadoObs:22,cpFallido:40,cpPendiente:20,cpBloqueado:13,cpNA:2,cpNoDev:10,defectos:27,mejoras:3,totalTickets:33,ticketsValidos:30,defCritical:0,defHigh:9,defMedium:17,defLow:1,tasaDevolucion:0.19,promDiasCicloTicket:9,totalTasaDefectos:6},
+  {proyecto:"Registro de acciones (Etapa 3.1)",complejidad:"Baja",tipo:"Iteración",qInicio:"Q2 2025",qFin:"Q2 2025",tiempoCiclo:13,statusQA:"Listo",cpPlanificado:35,numIteraciones:2,cpEjecutado:46,cpAprobado:20,cpAprobadoObs:0,cpFallido:26,cpPendiente:2,cpBloqueado:0,cpNA:0,cpNoDev:0,defectos:3,mejoras:0,totalTickets:3,ticketsValidos:3,defCritical:0,defHigh:0,defMedium:3,defLow:0,tasaDevolucion:0.67,promDiasCicloTicket:12,totalTasaDefectos:6.52},
+  {proyecto:"Plantillas y Exportaciones 1° Etapa",complejidad:"Alta",tipo:"Web",qInicio:"Q3 2025",qFin:"Q3 2025",tiempoCiclo:49,statusQA:"Listo",cpPlanificado:348,numIteraciones:9,cpEjecutado:492,cpAprobado:422,cpAprobadoObs:25,cpFallido:45,cpPendiente:0,cpBloqueado:5,cpNA:11,cpNoDev:5,defectos:46,mejoras:4,totalTickets:53,ticketsValidos:50,defCritical:0,defHigh:9,defMedium:21,defLow:16,tasaDevolucion:0.18,promDiasCicloTicket:8,totalTasaDefectos:9.35},
+  {proyecto:"Herramienta múltiples impuestos",complejidad:"Media",tipo:"Web",qInicio:"Q2 2025",qFin:"Q3 2025",tiempoCiclo:27,statusQA:"Listo",cpPlanificado:105,numIteraciones:4,cpEjecutado:102,cpAprobado:94,cpAprobadoObs:4,cpFallido:4,cpPendiente:8,cpBloqueado:6,cpNA:3,cpNoDev:0,defectos:6,mejoras:2,totalTickets:8,ticketsValidos:8,defCritical:0,defHigh:2,defMedium:2,defLow:2,tasaDevolucion:0,promDiasCicloTicket:9,totalTasaDefectos:3.43},
+  {proyecto:"RindeConnect 2.0 MVP 1 (Etapa 1)",complejidad:"Alta",tipo:"Iteración",qInicio:"Q2 2025",qFin:"Q3 2025",tiempoCiclo:2,statusQA:"Listo",cpPlanificado:36,numIteraciones:2,cpEjecutado:35,cpAprobado:32,cpAprobadoObs:1,cpFallido:2,cpPendiente:0,cpBloqueado:0,cpNA:8,cpNoDev:0,defectos:2,mejoras:0,totalTickets:3,ticketsValidos:2,defCritical:0,defHigh:0,defMedium:1,defLow:1,tasaDevolucion:0,promDiasCicloTicket:4,totalTasaDefectos:5.71},
+  {proyecto:"RIA 2.0",complejidad:"Media",tipo:"Web",qInicio:"Q4 2024",qFin:"Q3 2025",tiempoCiclo:157,statusQA:"Listo",cpPlanificado:139,numIteraciones:5,cpEjecutado:177,cpAprobado:149,cpAprobadoObs:15,cpFallido:13,cpPendiente:0,cpBloqueado:6,cpNA:0,cpNoDev:14,defectos:13,mejoras:2,totalTickets:20,ticketsValidos:15,defCritical:2,defHigh:4,defMedium:4,defLow:3,tasaDevolucion:0.36,promDiasCicloTicket:69,totalTasaDefectos:6.99},
+  {proyecto:"Mejoras Q3 2025",complejidad:"Media",tipo:"Mejoras",qInicio:"Q3 2025",qFin:"Q3 2025",tiempoCiclo:7,statusQA:"Listo",cpPlanificado:122,numIteraciones:4,cpEjecutado:84,cpAprobado:62,cpAprobadoObs:1,cpFallido:21,cpPendiente:0,cpBloqueado:0,cpNA:2,cpNoDev:0,defectos:10,mejoras:0,totalTickets:11,ticketsValidos:10,defCritical:0,defHigh:6,defMedium:4,defLow:0,tasaDevolucion:0,promDiasCicloTicket:4,totalTasaDefectos:11.90},
+  {proyecto:"Refactor WhatsApp",complejidad:"Media",tipo:"Iteración",qInicio:"Q3 2025",qFin:"Q3 2025",tiempoCiclo:21,statusQA:"Listo",cpPlanificado:25,numIteraciones:2,cpEjecutado:25,cpAprobado:22,cpAprobadoObs:1,cpFallido:2,cpPendiente:0,cpBloqueado:0,cpNA:2,cpNoDev:0,defectos:5,mejoras:0,totalTickets:5,ticketsValidos:5,defCritical:1,defHigh:0,defMedium:3,defLow:1,tasaDevolucion:0,promDiasCicloTicket:7,totalTasaDefectos:0},
+  {proyecto:"Release 9.7.0",complejidad:"Alta",tipo:"Mobile",qInicio:"Q3 2025",qFin:"Q3 2025",tiempoCiclo:23,statusQA:"Listo",cpPlanificado:96,numIteraciones:8,cpEjecutado:155,cpAprobado:128,cpAprobadoObs:9,cpFallido:18,cpPendiente:0,cpBloqueado:0,cpNA:10,cpNoDev:0,defectos:5,mejoras:2,totalTickets:8,ticketsValidos:7,defCritical:0,defHigh:1,defMedium:2,defLow:2,tasaDevolucion:0.43,promDiasCicloTicket:17,totalTasaDefectos:3},
+  {proyecto:"Viáticos",complejidad:"Alta",tipo:"Web",qInicio:"Q2 2025",qFin:"Q3 2025",tiempoCiclo:46,statusQA:"Listo",cpPlanificado:593,numIteraciones:3,cpEjecutado:627,cpAprobado:516,cpAprobadoObs:61,cpFallido:50,cpPendiente:1,cpBloqueado:53,cpNA:13,cpNoDev:3,defectos:64,mejoras:11,totalTickets:83,ticketsValidos:75,defCritical:2,defHigh:22,defMedium:22,defLow:18,tasaDevolucion:0.16,promDiasCicloTicket:23,totalTasaDefectos:10.21},
+  {proyecto:"RindeTravel | Nuevas funcionales",complejidad:"Media",tipo:"Iteración",qInicio:"Q1 2025",qFin:"Q3 2025",tiempoCiclo:124,statusQA:"Listo",cpPlanificado:59,numIteraciones:3,cpEjecutado:77,cpAprobado:70,cpAprobadoObs:3,cpFallido:4,cpPendiente:10,cpBloqueado:0,cpNA:5,cpNoDev:8,defectos:5,mejoras:0,totalTickets:5,ticketsValidos:5,defCritical:0,defHigh:0,defMedium:4,defLow:1,tasaDevolucion:0.20,promDiasCicloTicket:89,totalTasaDefectos:11.69},
+  {proyecto:"Cargadores masivos en web",complejidad:"Media",tipo:"Web",qInicio:"Q3 2025",qFin:"Q3 2025",tiempoCiclo:5,statusQA:"Listo",cpPlanificado:87,numIteraciones:1,cpEjecutado:81,cpAprobado:81,cpAprobadoObs:0,cpFallido:0,cpPendiente:0,cpBloqueado:0,cpNA:2,cpNoDev:0,defectos:1,mejoras:0,totalTickets:3,ticketsValidos:1,defCritical:0,defHigh:0,defMedium:1,defLow:0,tasaDevolucion:0,promDiasCicloTicket:3,totalTasaDefectos:1.23},
+  {proyecto:"Revisión general Web App Rindegastos",complejidad:"Baja",tipo:"Revisión general",qInicio:"Q3 2025",qFin:"Q3 2025",tiempoCiclo:1,statusQA:"Listo",cpPlanificado:26,numIteraciones:1,cpEjecutado:24,cpAprobado:23,cpAprobadoObs:1,cpFallido:0,cpPendiente:0,cpBloqueado:0,cpNA:1,cpNoDev:0,defectos:0,mejoras:0,totalTickets:0,ticketsValidos:0,defCritical:0,defHigh:0,defMedium:0,defLow:0,tasaDevolucion:0,promDiasCicloTicket:0,totalTasaDefectos:0},
+  {proyecto:"Iteración Fondos 2.0",complejidad:"Media",tipo:"Iteración",qInicio:"Q2 2025",qFin:"Q3 2025",tiempoCiclo:99,statusQA:"Listo",cpPlanificado:57,numIteraciones:2,cpEjecutado:33,cpAprobado:33,cpAprobadoObs:0,cpFallido:0,cpPendiente:0,cpBloqueado:0,cpNA:6,cpNoDev:0,defectos:3,mejoras:0,totalTickets:4,ticketsValidos:3,defCritical:0,defHigh:0,defMedium:2,defLow:1,tasaDevolucion:0,promDiasCicloTicket:50,totalTasaDefectos:9.09},
+  {proyecto:"Release 9.8.0",complejidad:"Alta",tipo:"Mobile",qInicio:"Q3 2025",qFin:"Q3 2025",tiempoCiclo:16,statusQA:"Listo",cpPlanificado:207,numIteraciones:8,cpEjecutado:285,cpAprobado:227,cpAprobadoObs:10,cpFallido:48,cpPendiente:2,cpBloqueado:11,cpNA:3,cpNoDev:0,defectos:37,mejoras:0,totalTickets:38,ticketsValidos:37,defCritical:16,defHigh:10,defMedium:10,defLow:1,tasaDevolucion:0.24,promDiasCicloTicket:4,totalTasaDefectos:13},
+  {proyecto:"Cargadores masivos (usuarios)",complejidad:"Media",tipo:"Web",qInicio:"Q3 2025",qFin:"Q4 2025",tiempoCiclo:5,statusQA:"Listo",cpPlanificado:47,numIteraciones:1,cpEjecutado:34,cpAprobado:34,cpAprobadoObs:0,cpFallido:0,cpPendiente:0,cpBloqueado:0,cpNA:14,cpNoDev:0,defectos:1,mejoras:0,totalTickets:2,ticketsValidos:2,defCritical:0,defHigh:0,defMedium:0,defLow:1,tasaDevolucion:0,promDiasCicloTicket:3,totalTasaDefectos:2.94},
+  {proyecto:"Iteración Viáticos",complejidad:"Alta",tipo:"Iteración",qInicio:"Q4 2025",qFin:"Q4 2025",tiempoCiclo:7,statusQA:"Listo",cpPlanificado:38,numIteraciones:2,cpEjecutado:42,cpAprobado:38,cpAprobadoObs:2,cpFallido:2,cpPendiente:0,cpBloqueado:0,cpNA:0,cpNoDev:0,defectos:3,mejoras:0,totalTickets:3,ticketsValidos:3,defCritical:0,defHigh:0,defMedium:2,defLow:1,tasaDevolucion:0,promDiasCicloTicket:55,totalTasaDefectos:7.14},
+  {proyecto:"Release 9.9.0",complejidad:"Alta",tipo:"Mobile",qInicio:"Q4 2025",qFin:"Q4 2025",tiempoCiclo:13,statusQA:"Listo",cpPlanificado:118,numIteraciones:6,cpEjecutado:204,cpAprobado:172,cpAprobadoObs:10,cpFallido:22,cpPendiente:0,cpBloqueado:6,cpNA:5,cpNoDev:0,defectos:14,mejoras:3,totalTickets:18,ticketsValidos:17,defCritical:0,defHigh:6,defMedium:5,defLow:3,tasaDevolucion:0.06,promDiasCicloTicket:7,totalTasaDefectos:6},
+  {proyecto:"Flujos 2.0",complejidad:"Alta",tipo:"Web",qInicio:"Q4 2025",qFin:"Q4 2025",tiempoCiclo:36,statusQA:"Listo",cpPlanificado:182,numIteraciones:3,cpEjecutado:192,cpAprobado:161,cpAprobadoObs:1,cpFallido:30,cpPendiente:0,cpBloqueado:29,cpNA:4,cpNoDev:12,defectos:18,mejoras:1,totalTickets:23,ticketsValidos:19,defCritical:0,defHigh:5,defMedium:7,defLow:6,tasaDevolucion:0.16,promDiasCicloTicket:13,totalTasaDefectos:9.38},
+  {proyecto:"Mejoras Q4 2025",complejidad:"Media",tipo:"Mejoras",qInicio:"Q4 2025",qFin:"Q4 2025",tiempoCiclo:57,statusQA:"Listo",cpPlanificado:479,numIteraciones:6,cpEjecutado:526,cpAprobado:479,cpAprobadoObs:2,cpFallido:45,cpPendiente:0,cpBloqueado:29,cpNA:36,cpNoDev:14,defectos:42,mejoras:2,totalTickets:47,ticketsValidos:44,defCritical:1,defHigh:23,defMedium:15,defLow:3,tasaDevolucion:0.05,promDiasCicloTicket:9,totalTasaDefectos:6.67},
+  {proyecto:"Plantillas y Exportaciones 2° Etapa",complejidad:"Alta",tipo:"Web",qInicio:"Q3 2025",qFin:"Q4 2025",tiempoCiclo:34,statusQA:"Listo",cpPlanificado:147,numIteraciones:5,cpEjecutado:197,cpAprobado:183,cpAprobadoObs:0,cpFallido:14,cpPendiente:0,cpBloqueado:0,cpNA:0,cpNoDev:10,defectos:11,mejoras:0,totalTickets:11,ticketsValidos:11,defCritical:1,defHigh:0,defMedium:5,defLow:5,tasaDevolucion:0,promDiasCicloTicket:6,totalTasaDefectos:5.58},
+  {proyecto:"Concil-Ia (Plantilla manual)",complejidad:"Alta",tipo:"Iteración",qInicio:"Q4 2025",qFin:"Q4 2025",tiempoCiclo:27,statusQA:"Listo",cpPlanificado:286,numIteraciones:4,cpEjecutado:324,cpAprobado:301,cpAprobadoObs:9,cpFallido:14,cpPendiente:6,cpBloqueado:2,cpNA:3,cpNoDev:0,defectos:13,mejoras:3,totalTickets:16,ticketsValidos:16,defCritical:0,defHigh:4,defMedium:5,defLow:4,tasaDevolucion:0,promDiasCicloTicket:11,totalTasaDefectos:4.01},
+  {proyecto:"Release 10.0.0",complejidad:"Alta",tipo:"Mobile",qInicio:"Q4 2025",qFin:"Q4 2025",tiempoCiclo:14,statusQA:"Listo",cpPlanificado:248,numIteraciones:8,cpEjecutado:480,cpAprobado:411,cpAprobadoObs:6,cpFallido:63,cpPendiente:1,cpBloqueado:1,cpNA:5,cpNoDev:9,defectos:24,mejoras:0,totalTickets:25,ticketsValidos:24,defCritical:1,defHigh:2,defMedium:18,defLow:3,tasaDevolucion:0.09,promDiasCicloTicket:5,totalTasaDefectos:5},
+  {proyecto:"Plantillas y Exportaciones (Post release)",complejidad:"Baja",tipo:"Incremental",qInicio:"Q4 2025",qFin:"Q1 2026",tiempoCiclo:10,statusQA:"Listo",cpPlanificado:156,numIteraciones:2,cpEjecutado:20,cpAprobado:13,cpAprobadoObs:2,cpFallido:5,cpPendiente:0,cpBloqueado:0,cpNA:0,cpNoDev:0,defectos:4,mejoras:0,totalTickets:4,ticketsValidos:4,defCritical:0,defHigh:0,defMedium:3,defLow:1,tasaDevolucion:0,promDiasCicloTicket:10,totalTasaDefectos:5},
+  {proyecto:"Release 10.0.1",complejidad:"Media",tipo:"Mobile",qInicio:"Q1 2026",qFin:"Q1 2026",tiempoCiclo:3,statusQA:"Listo",cpPlanificado:23,numIteraciones:2,cpEjecutado:46,cpAprobado:46,cpAprobadoObs:0,cpFallido:0,cpPendiente:0,cpBloqueado:0,cpNA:0,cpNoDev:0,defectos:0,mejoras:0,totalTickets:0,ticketsValidos:0,defCritical:0,defHigh:0,defMedium:0,defLow:0,tasaDevolucion:0,promDiasCicloTicket:14,totalTasaDefectos:0}
+];
+
+// Helper: is a project a "Release" build (versioned release like Release 9.x or Release 10.x)
+function isRelease(p) {
+  return /^Release\s+\d/.test(p.proyecto);
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════════════════════
+let currentPeriod = 'Q4 2025'; // default = last Q with significant data
+let currentType   = '';         // '' = Todos, else: 'Web','Mobile','Release','Incremental','Revisión general'
+let currentComplexity = '';
+let sortKey = 'qFin';
+let sortAsc = true;
+let tableSearch = '';
+let charts = {};
+
+// Quarter ordering for sorting
+const Q_ORDER = {'Q3 2024':0,'Q4 2024':1,'Q1 2025':2,'Q2 2025':3,'Q3 2025':4,'Q4 2025':5,'Q1 2026':6,'Q2 2026':7};
+
+// ════════════════════════════════════════════════════════════════════════
+// TYPE MATCHING
+// Maps the pill's data-type value to a filter predicate
+// ════════════════════════════════════════════════════════════════════════
+function matchType(p, type) {
+  if (!type) return true;
+  if (type === 'Release')         return isRelease(p);
+  if (type === 'Mobile')          return p.tipo === 'Mobile' && !isRelease(p);
+  if (type === 'Web')             return p.tipo === 'Web';
+  if (type === 'Incremental')     return p.tipo === 'Incremental';
+  if (type === 'Revisión general') return p.tipo === 'Revisión general';
+  return p.tipo === type;
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// FILTER
+// ════════════════════════════════════════════════════════════════════════
+function getBasePeriodProjects() {
+  return ALL_PROJECTS.filter(p => matchPeriod(p, currentPeriod) && p.statusQA === 'Listo');
+}
+
+function getFilteredProjects() {
+  const comp = document.getElementById('complexityFilter').value;
+  return getBasePeriodProjects().filter(p => {
+    const typeMatch = matchType(p, currentType);
+    const compMatch = !comp || p.complejidad === comp;
+    return typeMatch && compMatch;
+  });
+}
+
+function matchPeriod(p, period) {
+  if (period === '2025') return p.qFin && p.qFin.includes('2025');
+  if (period === '2026') return p.qFin && p.qFin.includes('2026');
+  return p.qFin === period;
+}
+
+function setPeriod(el) {
+  document.querySelectorAll('#periodGroup .pill').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  currentPeriod = el.dataset.period;
+  updateTypeCounts();
+  applyFilters();
+}
+
+function setType(el) {
+  document.querySelectorAll('#typeGroup .pill').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  currentType = el.dataset.type;
+  applyFilters();
+}
+
+function applyFilters() {
+  currentComplexity = document.getElementById('complexityFilter').value;
+  renderAll();
+}
+
+function filterTable(q) {
+  tableSearch = q.toLowerCase();
+  renderTable(getFilteredProjects());
+}
+
+// Update project counts on type pills
+function updateTypeCounts() {
+  const base = getBasePeriodProjects();
+  const count = t => base.filter(p => matchType(p, t)).length;
+  document.getElementById('cnt-all').textContent       = base.length;
+  document.getElementById('cnt-web').textContent       = count('Web');
+  document.getElementById('cnt-mobile').textContent    = count('Mobile');
+  document.getElementById('cnt-release').textContent   = count('Release');
+  document.getElementById('cnt-incremental').textContent = count('Incremental');
+  document.getElementById('cnt-revision').textContent  = count('Revisión general');
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// METRICS
+// ════════════════════════════════════════════════════════════════════════
+function calcMetrics(projects) {
+  const n = projects.length;
+  if (!n) return {};
+
+  const sum = k => projects.reduce((a,p) => a + (p[k]||0), 0);
+  const avg = k => n ? sum(k)/n : 0;
+
+  const cpEjec  = sum('cpEjecutado');
+  const cpAprov = sum('cpAprobado') + sum('cpAprobadoObs');
+  const cpFall  = sum('cpFallido');
+
+  const webProj     = projects.filter(p=>p.tipo==='Web').length;
+  const mobProj     = projects.filter(p=>p.tipo==='Mobile').length;
+  const releaseProj = projects.filter(p=>isRelease(p)).length;
+
+  return {
+    n, webProj, mobProj, releaseProj,
+    cpEjec, cpAprov, cpFall,
+    pctAprov: cpEjec ? (cpAprov/cpEjec*100) : 0,
+    pctFall:  cpEjec ? (cpFall/cpEjec*100)  : 0,
+    cycleAvg: avg('tiempoCiclo'),
+    defTot:   sum('defectos'),
+    mejTot:   sum('mejoras'),
+    tickVal:  sum('ticketsValidos'),
+    defCritical: sum('defCritical'),
+    defHigh:     sum('defHigh'),
+    defMedium:   sum('defMedium'),
+    defLow:      sum('defLow'),
+    tasaDefAvg:     avg('totalTasaDefectos'),
+    tasaDevAvg:     avg('tasaDevolucion') * 100,
+    cicloTicketAvg: avg('promDiasCicloTicket'),
+    numIteraciones: sum('numIteraciones'),
+  };
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// RENDER KPI CARDS
+// ════════════════════════════════════════════════════════════════════════
+function kpiCard(label, value, delta, deltaGood, note) {
+  const dir = delta === null ? '' :
+    (deltaGood === true ? (delta >= 0 ? 'up' : 'down') :
+     deltaGood === false ? (delta <= 0 ? 'up' : 'down') : 'neutral');
+  const arrow = delta === null ? '' : (delta >= 0 ? '▲' : '▼');
+  const deltaHtml = delta !== null
+    ? `<div class="kpi-delta ${dir}">${arrow} ${Math.abs(delta).toFixed(1)} ${note||''}</div>`
+    : note ? `<div class="kpi-delta neutral">${note}</div>` : '';
+  return `<div class="kpi"><div class="kpi-label">${label}</div><div class="kpi-value">${value}</div>${deltaHtml}</div>`;
+}
+
+function renderKPIs(projects) {
+  const m = calcMetrics(projects);
+  if (!m.n) {
+    ['kpiGeneral','kpiEjecucion','kpiTickets'].forEach(id=>{
+      document.getElementById(id).innerHTML = `<div class="empty">Sin proyectos para el período y tipo seleccionados.</div>`;
+    });
+    return;
+  }
+
+  const typeLabel = currentType
+    ? (currentType === 'Revisión general' ? 'Rev. Gral.' : currentType)
+    : 'todos';
+
+  document.getElementById('kpiGeneral').innerHTML =
+    kpiCard('N° Proyectos', m.n, null, null, `${m.webProj} Web · ${m.releaseProj} Release`) +
+    kpiCard('Releases app Mobile', m.releaseProj, null, null) +
+    kpiCard('Proyectos Web', m.webProj, null, null);
+
+  document.getElementById('kpiEjecucion').innerHTML =
+    kpiCard('N° Pruebas ejecutadas', m.cpEjec.toLocaleString(), null, null) +
+    kpiCard('N° Ciclos de pruebas', m.numIteraciones, null, null) +
+    kpiCard('% Aprobados', m.pctAprov.toFixed(1)+'%', null, null) +
+    kpiCard('% Fallidos', m.pctFall.toFixed(1)+'%', null, null) +
+    kpiCard('Ciclo de pruebas promedio', m.cycleAvg.toFixed(1)+' días', null, null, 'días hábiles prom.');
+
+  document.getElementById('kpiTickets').innerHTML =
+    kpiCard('Tickets válidos', m.tickVal.toLocaleString(), null, null) +
+    kpiCard('Defectos', m.defTot.toLocaleString(), null, null) +
+    kpiCard('Mejoras', m.mejTot.toLocaleString(), null, null) +
+    kpiCard('Tasa de defectos (prom.)', m.tasaDefAvg.toFixed(1)+'%', null, null) +
+    kpiCard('Ciclo de vida ticket (prom.)', m.cicloTicketAvg.toFixed(1)+' días', null, null) +
+    kpiCard('Tasa devolución tickets (prom.)', m.tasaDevAvg.toFixed(1)+'%', null, null);
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// SEVERITY BARS
+// ════════════════════════════════════════════════════════════════════════
+function renderSevBars(projects) {
+  const m = calcMetrics(projects);
+  if (!m.n) { document.getElementById('sevBars').innerHTML=''; return; }
+  const total = m.defCritical + m.defHigh + m.defMedium + m.defLow || 1;
+  const rows = [
+    {label:'Critical', count: m.defCritical, color: 'var(--crit)'},
+    {label:'High',     count: m.defHigh,     color: 'var(--high)'},
+    {label:'Medium',   count: m.defMedium,   color: 'var(--medium)'},
+    {label:'Low',      count: m.defLow,      color: 'var(--low)'},
+  ];
+  document.getElementById('sevBars').innerHTML = rows.map(r=>`
+    <div class="sev-row">
+      <div class="sev-label">${r.label}</div>
+      <div class="sev-bar-wrap">
+        <div class="sev-bar" style="width:${(r.count/total*100).toFixed(1)}%;background:${r.color}"></div>
+      </div>
+      <div class="sev-count" style="color:${r.color}">${r.count}</div>
+    </div>
+  `).join('') +
+  `<div style="margin-top:10px;font-size:11px;color:var(--text-3)">Total: ${m.defCritical+m.defHigh+m.defMedium+m.defLow} defectos</div>`;
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// CHARTS
+// ════════════════════════════════════════════════════════════════════════
+const QUARTERS_ALL = ['Q1 2025','Q2 2025','Q3 2025','Q4 2025','Q1 2026'];
+
+function isDark() {
+  const t = document.documentElement.dataset.theme;
+  if (t === 'dark') return true;
+  if (t === 'light') return false;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+function chartDefaults() {
+  const dark = isDark();
+  Chart.defaults.color = dark ? '#7FA3C8' : '#8BA0B8';
+  Chart.defaults.borderColor = dark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.06)';
+}
+
+function destroyChart(id) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
+
+function renderChartEstados(projects) {
+  destroyChart('estados');
+  const ctx = document.getElementById('chartEstados').getContext('2d');
+  // Use quarters relevant to the selected period
+  let quarters;
+  if (currentPeriod === '2025') quarters = ['Q1 2025','Q2 2025','Q3 2025','Q4 2025'];
+  else if (currentPeriod === 'Q1 2026') quarters = ['Q1 2026'];
+  else quarters = [currentPeriod];
+
+  const forType = (q) => ALL_PROJECTS.filter(p => {
+    return p.qFin === q && p.statusQA === 'Listo' && matchType(p, currentType);
+  });
+
+  const aprov  = quarters.map(q => forType(q).reduce((a,p)=>a+p.cpAprobado+p.cpAprobadoObs,0));
+  const fallid = quarters.map(q => forType(q).reduce((a,p)=>a+p.cpFallido,0));
+  const pend   = quarters.map(q => forType(q).reduce((a,p)=>a+p.cpPendiente+p.cpBloqueado,0));
+  const na     = quarters.map(q => forType(q).reduce((a,p)=>a+p.cpNA+p.cpNoDev,0));
+
+  // When showing a single quarter, show all quarters for context
+  const contextQ = quarters.length === 1 ? ['Q1 2025','Q2 2025','Q3 2025','Q4 2025','Q1 2026'] : quarters;
+  const cAprov  = contextQ.map(q => ALL_PROJECTS.filter(p=>p.qFin===q&&p.statusQA==='Listo'&&matchType(p,currentType)).reduce((a,p)=>a+p.cpAprobado+p.cpAprobadoObs,0));
+  const cFallid = contextQ.map(q => ALL_PROJECTS.filter(p=>p.qFin===q&&p.statusQA==='Listo'&&matchType(p,currentType)).reduce((a,p)=>a+p.cpFallido,0));
+  const cPend   = contextQ.map(q => ALL_PROJECTS.filter(p=>p.qFin===q&&p.statusQA==='Listo'&&matchType(p,currentType)).reduce((a,p)=>a+p.cpPendiente+p.cpBloqueado,0));
+  const cNa     = contextQ.map(q => ALL_PROJECTS.filter(p=>p.qFin===q&&p.statusQA==='Listo'&&matchType(p,currentType)).reduce((a,p)=>a+p.cpNA+p.cpNoDev,0));
+
+  charts['estados'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: contextQ,
+      datasets: [
+        {label:'Aprobado',  data: cAprov,  backgroundColor:'#16A34A', stack:'s'},
+        {label:'Fallido',   data: cFallid, backgroundColor:'#DC2626', stack:'s'},
+        {label:'Pendiente', data: cPend,   backgroundColor:'#D97706', stack:'s'},
+        {label:'No aplica', data: cNa,     backgroundColor:'#94A3B8', stack:'s'},
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 12, font:{size:10} } } },
+      scales: {
+        x: { stacked: true, grid:{display:false}, ticks:{font:{size:10}} },
+        y: { stacked: true, ticks:{font:{size:10}} }
+      }
+    }
+  });
+}
+
+function renderChartTipos(projects) {
+  destroyChart('tipos');
+  const ctx = document.getElementById('chartTipos').getContext('2d');
+  const tipos = ['Web','Release (Mobile)','Incremental','Iteración','Mejoras','Revisión general'];
+  const counts = [
+    projects.filter(p=>p.tipo==='Web').length,
+    projects.filter(p=>isRelease(p)).length,
+    projects.filter(p=>p.tipo==='Incremental').length,
+    projects.filter(p=>p.tipo==='Iteración').length,
+    projects.filter(p=>p.tipo==='Mejoras').length,
+    projects.filter(p=>p.tipo==='Revisión general').length,
+  ].filter((_,i) => counts_nonempty(i, [projects.filter(p=>p.tipo==='Web').length,
+    projects.filter(p=>isRelease(p)).length,projects.filter(p=>p.tipo==='Incremental').length,
+    projects.filter(p=>p.tipo==='Iteración').length,projects.filter(p=>p.tipo==='Mejoras').length,
+    projects.filter(p=>p.tipo==='Revisión general').length]));
+
+  const allCounts = [
+    projects.filter(p=>p.tipo==='Web').length,
+    projects.filter(p=>isRelease(p)).length,
+    projects.filter(p=>p.tipo==='Incremental').length,
+    projects.filter(p=>p.tipo==='Iteración').length,
+    projects.filter(p=>p.tipo==='Mejoras').length,
+    projects.filter(p=>p.tipo==='Revisión general').length,
+  ];
+  const colors = ['#1B6EF3','#7C3AED','#EC4899','#D97706','#16A34A','#64748B'];
+  const filtTipos = tipos.filter((_,i) => allCounts[i] > 0);
+  const filtColors = colors.filter((_,i) => allCounts[i] > 0);
+  const filtCounts = allCounts.filter(c => c > 0);
+
+  charts['tipos'] = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: filtTipos,
+      datasets: [{ data: filtCounts, backgroundColor: filtColors, borderWidth: 0, hoverOffset: 6 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8, font:{size:10} } }
+      },
+      cutout: '60%'
+    }
+  });
+}
+
+function counts_nonempty(i, arr) { return arr[i] > 0; }
+
+function renderChartTasaDefectos(projects) {
+  destroyChart('tasadef');
+  const ctx = document.getElementById('chartTasaDefectos').getContext('2d');
+  const quarters = ['Q1 2025','Q2 2025','Q3 2025','Q4 2025','Q1 2026'];
+  const avgBy = (q, typeKey) => {
+    const ps = ALL_PROJECTS.filter(p => {
+      return p.qFin === q && p.statusQA === 'Listo' && p.totalTasaDefectos > 0 && matchType(p, typeKey);
+    });
+    return ps.length ? ps.reduce((a,p)=>a+p.totalTasaDefectos,0)/ps.length : 0;
+  };
+
+  charts['tasadef'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: quarters,
+      datasets: [
+        {label:'Web',     data: quarters.map(q=>avgBy(q,'Web')),     backgroundColor:'#1B6EF3'},
+        {label:'Release', data: quarters.map(q=>avgBy(q,'Release')), backgroundColor:'#7C3AED'},
+        {label:'Otras',   data: quarters.map(q=>{
+          const ps = ALL_PROJECTS.filter(p=>p.qFin===q&&p.statusQA==='Listo'&&p.totalTasaDefectos>0&&!matchType(p,'Web')&&!matchType(p,'Release'));
+          return ps.length ? ps.reduce((a,p)=>a+p.totalTasaDefectos,0)/ps.length : 0;
+        }), backgroundColor:'#D97706'},
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels:{boxWidth:8,padding:8,font:{size:9}} } },
+      scales: {
+        x: { ticks:{font:{size:9}}, grid:{display:false} },
+        y: { ticks:{font:{size:9}, callback: v=>v.toFixed(0)+'%'} }
+      }
+    }
+  });
+}
+
+function renderChartCiclo(projects) {
+  destroyChart('ciclo');
+  const ctx = document.getElementById('chartCiclo').getContext('2d');
+  const quarters = ['Q1 2025','Q2 2025','Q3 2025','Q4 2025','Q1 2026'];
+  const avgCiclo = (q, typeKey) => {
+    const ps = ALL_PROJECTS.filter(p=>p.qFin===q&&p.statusQA==='Listo'&&p.tiempoCiclo>0&&p.tiempoCiclo<120&&matchType(p,typeKey));
+    return ps.length ? Math.round(ps.reduce((a,p)=>a+p.tiempoCiclo,0)/ps.length) : 0;
+  };
+
+  charts['ciclo'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: quarters,
+      datasets: [
+        {label:'Web',     data: quarters.map(q=>avgCiclo(q,'Web')),     backgroundColor:'#1B6EF3'},
+        {label:'Release', data: quarters.map(q=>avgCiclo(q,'Release')), backgroundColor:'#7C3AED'},
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels:{boxWidth:8,padding:8,font:{size:9}} } },
+      scales: {
+        x: { ticks:{font:{size:9}}, grid:{display:false} },
+        y: { ticks:{font:{size:9}, callback: v=>v+' d'} }
+      }
+    }
+  });
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// TABLE
+// ════════════════════════════════════════════════════════════════════════
+function tagTipo(p) {
+  if (isRelease(p)) return `<span class="tag tag-release">Release</span>`;
+  const cls = {Web:'tag-web',Mobile:'tag-mobile',Mejoras:'tag-mejoras',
+    Iteración:'tag-iter',Incremental:'tag-incr','Revisión general':'tag-rev'}[p.tipo]||'tag-rev';
+  return `<span class="tag ${cls}">${p.tipo}</span>`;
+}
+function tagComp(c) {
+  const cls = {Alta:'tag-alta',Media:'tag-media',Baja:'tag-baja'}[c]||'';
+  return `<span class="tag ${cls}">${c}</span>`;
+}
+function tagStatus(s) {
+  return `<span class="tag ${s==='Listo'?'tag-listo':'tag-noapl'}">${s}</span>`;
+}
+
+function sortTable(key) {
+  if (sortKey === key) sortAsc = !sortAsc;
+  else { sortKey = key; sortAsc = true; }
+  renderTable(getFilteredProjects());
+}
+
+function renderTable(projects) {
+  const q = tableSearch;
+  let ps = q ? projects.filter(p=>p.proyecto.toLowerCase().includes(q)||p.tipo.toLowerCase().includes(q)) : projects;
+
+  ps.sort((a,b)=>{
+    let av = a[sortKey], bv = b[sortKey];
+    if (sortKey === 'qFin') { av = Q_ORDER[av]??99; bv = Q_ORDER[bv]??99; }
+    if (typeof av === 'string') return sortAsc ? av.localeCompare(bv) : bv.localeCompare(av);
+    return sortAsc ? av-bv : bv-av;
+  });
+
+  document.getElementById('tableCount').textContent = `${ps.length} proyecto${ps.length!==1?'s':''}`;
+  const pct = (a,b) => b ? (a/b*100).toFixed(0)+'%' : '—';
+  const fmtTasa = v => v ? (v*100).toFixed(0)+'%' : '0%';
+
+  document.getElementById('projBody').innerHTML = ps.length ? ps.map(p=>`
+    <tr>
+      <td style="max-width:220px;white-space:normal;line-height:1.3;">${p.proyecto}</td>
+      <td>${tagTipo(p)}</td>
+      <td>${tagComp(p.complejidad)}</td>
+      <td>${p.qFin||'—'}</td>
+      <td class="num">${p.tiempoCiclo||'—'}</td>
+      <td class="num">${(p.cpEjecutado||0).toLocaleString()}</td>
+      <td class="num" style="color:var(--up)">${(p.cpAprobado||0).toLocaleString()} <span style="color:var(--text-3);font-size:10px;">${pct(p.cpAprobado,p.cpEjecutado)}</span></td>
+      <td class="num" style="color:${p.cpFallido>0?'var(--down)':'var(--text-3)'}">${(p.cpFallido||0).toLocaleString()}</td>
+      <td class="num">${(p.defectos||0).toLocaleString()}</td>
+      <td class="num">${typeof p.totalTasaDefectos==='number'?p.totalTasaDefectos.toFixed(1)+'%':'—'}</td>
+      <td class="num">${fmtTasa(p.tasaDevolucion)}</td>
+      <td>${tagStatus(p.statusQA)}</td>
+    </tr>
+  `).join('') : `<tr><td colspan="12" class="empty">Sin resultados para este filtro.</td></tr>`;
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// MAIN RENDER
+// ════════════════════════════════════════════════════════════════════════
+function renderAll() {
+  const projects = getFilteredProjects();
+  chartDefaults();
+  renderKPIs(projects);
+  renderSevBars(projects);
+  renderChartEstados(projects);
+  renderChartTipos(projects);
+  renderChartTasaDefectos(projects);
+  renderChartCiclo(projects);
+  renderTable(projects);
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// REFRESH from Google Sheets
+// ════════════════════════════════════════════════════════════════════════
+async function refreshData() {
+  const btn = document.getElementById('btnRefresh');
+  btn.classList.add('loading');
+  document.getElementById('refreshIcon').textContent = '⟳';
+
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${SHEET_GID_DETAIL}`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('No se pudo acceder a la hoja.');
+    const text = await res.text();
+    parseSheetCSV(text);
+    document.getElementById('lastUpdated').textContent = 'Actualizado: ' + new Date().toLocaleString('es-CL');
+  } catch(e) {
+    console.warn('Refresh fallback – using embedded data:', e.message);
+    document.getElementById('lastUpdated').textContent = 'Datos embebidos (publicar hoja para actualización en vivo)';
+  }
+
+  btn.classList.remove('loading');
+  document.getElementById('refreshIcon').textContent = '↻';
+  renderAll();
+}
+
+function parseSheetCSV(csv) {
+  const lines = csv.split('\n').map(l=>l.split(',').map(c=>c.replace(/^"|"$/g,'').trim()));
+  const headerIdx = lines.findIndex(l => l[0]==='Proyecto' || l.includes('Proyecto'));
+  if (headerIdx < 0) return;
+  console.log('Sheet parsed, headers found at row', headerIdx);
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// THEME
+// ════════════════════════════════════════════════════════════════════════
+function toggleTheme() {
+  const el = document.documentElement;
+  const cur = el.dataset.theme;
+  el.dataset.theme = cur === 'dark' ? 'light' : 'dark';
+  try { localStorage.setItem('qa-theme', el.dataset.theme); } catch(e){}
+  renderAll();
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════════════════
+(function init() {
+  try {
+    const saved = localStorage.getItem('qa-theme');
+    if (saved) document.documentElement.dataset.theme = saved;
+  } catch(e){}
+
+  document.getElementById('lastUpdated').textContent =
+    'Datos al ' + new Date().toLocaleDateString('es-CL', {day:'2-digit',month:'long',year:'numeric'});
+
+  updateTypeCounts();
+  renderAll();
+})();
+</script>
