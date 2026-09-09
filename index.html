@@ -644,6 +644,16 @@
     </div>
   </div>
 
+  <!-- RESUMEN SEMESTRAL -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-label">Resumen semestral</span>
+      <div class="section-line"></div>
+    </div>
+    <div class="chart-sub" id="semestralSub" style="margin:-6px 0 12px;"></div>
+    <div class="kpi-grid wide" id="kpiSemestral"></div>
+  </div>
+
   <!-- PROYECTOS TABLE -->
   <div class="section">
     <div class="section-header">
@@ -993,6 +1003,44 @@ function renderKPIs(projects) {
 }
 
 // ════════════════════════════════════════════════════════════════════════
+// RESUMEN SEMESTRAL — últimos 2 Q cerrados vs los 2 anteriores
+// Es "global": ignora los pills de Período/Tipo, siempre compara los 4
+// últimos trimestres cerrados (los mismos que CLOSED_QUARTERS).
+// ════════════════════════════════════════════════════════════════════════
+function renderSemestral() {
+  const prevHalf = CLOSED_QUARTERS.slice(0, 2);
+  const curHalf  = CLOSED_QUARTERS.slice(2);
+
+  const curProjects  = ALL_PROJECTS.filter(p => curHalf.includes(p.qFin)  && p.statusQA === 'Listo');
+  const prevProjects = ALL_PROJECTS.filter(p => prevHalf.includes(p.qFin) && p.statusQA === 'Listo');
+
+  const cur  = calcMetrics(curProjects);
+  const prev = calcMetrics(prevProjects);
+
+  document.getElementById('semestralSub').textContent =
+    `${curHalf.join(' + ')}  vs  ${prevHalf.join(' + ')}`;
+
+  if (!cur.n) {
+    document.getElementById('kpiSemestral').innerHTML =
+      `<div class="empty">Sin proyectos cerrados todavía en ${curHalf.join(' + ')}.</div>`;
+    return;
+  }
+
+  const note = `vs ${prevHalf.join(' + ')}`;
+  const delta = (curVal, prevVal) => prev.n ? curVal - prevVal : null;
+
+  document.getElementById('kpiSemestral').innerHTML =
+    kpiCard('N° Proyectos', cur.n, delta(cur.n, prev.n), null, note) +
+    kpiCard('% Aprobados', cur.pctAprov.toFixed(1)+'%', delta(cur.pctAprov, prev.pctAprov), true, note) +
+    kpiCard('% Fallidos', cur.pctFall.toFixed(1)+'%', delta(cur.pctFall, prev.pctFall), false, note) +
+    kpiCard('Ciclo de pruebas (prom.)', cur.cycleAvg.toFixed(1)+' días', delta(cur.cycleAvg, prev.cycleAvg), false, note) +
+    kpiCard('Tasa de defectos (prom.)', cur.tasaDefAvg.toFixed(1)+'%', delta(cur.tasaDefAvg, prev.tasaDefAvg), false, note) +
+    kpiCard('Tasa devolución tickets (prom.)', cur.tasaDevAvg.toFixed(1)+'%', delta(cur.tasaDevAvg, prev.tasaDevAvg), false, note) +
+    kpiCard('Ciclo de vida ticket (prom.)', cur.cicloTicketAvg.toFixed(1)+' días', delta(cur.cicloTicketAvg, prev.cicloTicketAvg), false, note) +
+    kpiCard('Defectos totales', cur.defTot.toLocaleString(), delta(cur.defTot, prev.defTot), false, note);
+}
+
+// ════════════════════════════════════════════════════════════════════════
 // SEVERITY BARS
 // ════════════════════════════════════════════════════════════════════════
 function renderSevBars(projects) {
@@ -1313,6 +1361,7 @@ function renderAll() {
   renderChartCiclo(projects);
   renderChartTasaDevolucion(projects);
   renderChartCicloTicket(projects);
+  renderSemestral();
   renderTable(projects);
 }
 
