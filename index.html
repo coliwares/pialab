@@ -538,12 +538,7 @@
   <div class="controls-row">
     <span class="controls-label">Período</span>
     <div class="pill-group" id="periodGroup">
-      <button class="pill" data-period="Q1 2025" onclick="setPeriod(this)">Q1 2025</button>
-      <button class="pill" data-period="Q2 2025" onclick="setPeriod(this)">Q2 2025</button>
-      <button class="pill" data-period="Q3 2025" onclick="setPeriod(this)">Q3 2025</button>
-      <button class="pill active" data-period="Q4 2025" onclick="setPeriod(this)">Q4 2025</button>
-      <button class="pill" data-period="2025" onclick="setPeriod(this)">Año 2025</button>
-      <button class="pill" data-period="Q1 2026" onclick="setPeriod(this)">Q1 2026</button>
+      <!-- Poblado en runtime con los últimos 4 Q cerrados (ver renderPeriodPills) -->
     </div>
   </div>
   <div class="controls-row">
@@ -725,9 +720,35 @@ function isRelease(p) {
 }
 
 // ════════════════════════════════════════════════════════════════════════
+// PERIOD — closed quarters, computed from the real system date.
+// A quarter counts as "closed" once it has ended; the quarter in progress
+// is never shown. qFin is what defines which quarter a project belongs to.
+// ════════════════════════════════════════════════════════════════════════
+function quarterOf(date) {
+  return { q: Math.floor(date.getMonth() / 3) + 1, year: date.getFullYear() };
+}
+function prevQuarter({ q, year }) {
+  return q === 1 ? { q: 4, year: year - 1 } : { q: q - 1, year };
+}
+function qLabel({ q, year }) { return `Q${q} ${year}`; }
+
+// Last N closed quarters (excludes the current, still-open quarter), oldest → newest
+function lastClosedQuarters(n) {
+  let cursor = prevQuarter(quarterOf(new Date())); // most recently closed quarter
+  const list = [];
+  for (let i = 0; i < n; i++) {
+    list.unshift(qLabel(cursor));
+    cursor = prevQuarter(cursor);
+  }
+  return list;
+}
+
+const CLOSED_QUARTERS = lastClosedQuarters(4);
+
+// ════════════════════════════════════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════════════════════════════════════
-let currentPeriod = 'Q4 2025'; // default = last Q with significant data
+let currentPeriod = CLOSED_QUARTERS[CLOSED_QUARTERS.length - 1]; // default = último Q cerrado
 let currentType   = '';         // '' = Todos, else: 'Web','Mobile','Release','Incremental','Revisión general'
 let currentComplexity = '';
 let sortKey = 'qFin';
@@ -769,9 +790,13 @@ function getFilteredProjects() {
 }
 
 function matchPeriod(p, period) {
-  if (period === '2025') return p.qFin && p.qFin.includes('2025');
-  if (period === '2026') return p.qFin && p.qFin.includes('2026');
   return p.qFin === period;
+}
+
+function renderPeriodPills() {
+  document.getElementById('periodGroup').innerHTML = CLOSED_QUARTERS.map(q =>
+    `<button class="pill${q === currentPeriod ? ' active' : ''}" data-period="${q}" onclick="setPeriod(this)">${q}</button>`
+  ).join('');
 }
 
 function setPeriod(el) {
@@ -925,7 +950,6 @@ function renderSevBars(projects) {
 // ════════════════════════════════════════════════════════════════════════
 // CHARTS
 // ════════════════════════════════════════════════════════════════════════
-const QUARTERS_ALL = ['Q1 2025','Q2 2025','Q3 2025','Q4 2025','Q1 2026'];
 
 function isDark() {
   const t = document.documentElement.dataset.theme;
@@ -947,23 +971,8 @@ function destroyChart(id) {
 function renderChartEstados(projects) {
   destroyChart('estados');
   const ctx = document.getElementById('chartEstados').getContext('2d');
-  // Use quarters relevant to the selected period
-  let quarters;
-  if (currentPeriod === '2025') quarters = ['Q1 2025','Q2 2025','Q3 2025','Q4 2025'];
-  else if (currentPeriod === 'Q1 2026') quarters = ['Q1 2026'];
-  else quarters = [currentPeriod];
-
-  const forType = (q) => ALL_PROJECTS.filter(p => {
-    return p.qFin === q && p.statusQA === 'Listo' && matchType(p, currentType);
-  });
-
-  const aprov  = quarters.map(q => forType(q).reduce((a,p)=>a+p.cpAprobado+p.cpAprobadoObs,0));
-  const fallid = quarters.map(q => forType(q).reduce((a,p)=>a+p.cpFallido,0));
-  const pend   = quarters.map(q => forType(q).reduce((a,p)=>a+p.cpPendiente+p.cpBloqueado,0));
-  const na     = quarters.map(q => forType(q).reduce((a,p)=>a+p.cpNA+p.cpNoDev,0));
-
-  // When showing a single quarter, show all quarters for context
-  const contextQ = quarters.length === 1 ? ['Q1 2025','Q2 2025','Q3 2025','Q4 2025','Q1 2026'] : quarters;
+  // Show the selected quarter in context of the other closed quarters visible in the period pills
+  const contextQ = CLOSED_QUARTERS;
   const cAprov  = contextQ.map(q => ALL_PROJECTS.filter(p=>p.qFin===q&&p.statusQA==='Listo'&&matchType(p,currentType)).reduce((a,p)=>a+p.cpAprobado+p.cpAprobadoObs,0));
   const cFallid = contextQ.map(q => ALL_PROJECTS.filter(p=>p.qFin===q&&p.statusQA==='Listo'&&matchType(p,currentType)).reduce((a,p)=>a+p.cpFallido,0));
   const cPend   = contextQ.map(q => ALL_PROJECTS.filter(p=>p.qFin===q&&p.statusQA==='Listo'&&matchType(p,currentType)).reduce((a,p)=>a+p.cpPendiente+p.cpBloqueado,0));
@@ -1041,7 +1050,7 @@ function counts_nonempty(i, arr) { return arr[i] > 0; }
 function renderChartTasaDefectos(projects) {
   destroyChart('tasadef');
   const ctx = document.getElementById('chartTasaDefectos').getContext('2d');
-  const quarters = ['Q1 2025','Q2 2025','Q3 2025','Q4 2025','Q1 2026'];
+  const quarters = CLOSED_QUARTERS;
   const avgBy = (q, typeKey) => {
     const ps = ALL_PROJECTS.filter(p => {
       return p.qFin === q && p.statusQA === 'Listo' && p.totalTasaDefectos > 0 && matchType(p, typeKey);
@@ -1076,7 +1085,7 @@ function renderChartTasaDefectos(projects) {
 function renderChartCiclo(projects) {
   destroyChart('ciclo');
   const ctx = document.getElementById('chartCiclo').getContext('2d');
-  const quarters = ['Q1 2025','Q2 2025','Q3 2025','Q4 2025','Q1 2026'];
+  const quarters = CLOSED_QUARTERS;
   const avgCiclo = (q, typeKey) => {
     const ps = ALL_PROJECTS.filter(p=>p.qFin===q&&p.statusQA==='Listo'&&p.tiempoCiclo>0&&p.tiempoCiclo<120&&matchType(p,typeKey));
     return ps.length ? Math.round(ps.reduce((a,p)=>a+p.tiempoCiclo,0)/ps.length) : 0;
@@ -1228,6 +1237,7 @@ function toggleTheme() {
   document.getElementById('lastUpdated').textContent =
     'Datos al ' + new Date().toLocaleDateString('es-CL', {day:'2-digit',month:'long',year:'numeric'});
 
+  renderPeriodPills();
   updateTypeCounts();
   renderAll();
 })();

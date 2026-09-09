@@ -66,7 +66,7 @@ Modificar el array `ALL_PROJECTS` en `index.html` con los datos del nuevo perío
 
 | Filtro | Descripción |
 |--------|-------------|
-| **Período** | Q1–Q4 por año, o vista anual |
+| **Período** | Últimos 4 trimestres **cerrados** (se calculan solos según la fecha actual) |
 | **Todos** | Todos los proyectos del período |
 | **Web** | Proyectos de tipo Web |
 | **Mobile** | Proyectos Mobile (no releases) |
@@ -74,7 +74,13 @@ Modificar el array `ALL_PROJECTS` en `index.html` con los datos del nuevo perío
 | **Incremental** | Mejoras incrementales post-release |
 | **Revisión general** | Revisiones generales de app |
 
-El dashboard abre por defecto en **Q4 2025** con todos los tipos.
+### Período (trimestres)
+
+Los botones de período **no están fijos en el código**: se recalculan cada vez que se abre el dashboard, tomando los **4 últimos trimestres ya cerrados** respecto a la fecha real del dispositivo. El trimestre en curso (aún no cerrado) nunca se muestra, y los trimestres más antiguos que esos 4 quedan ocultos.
+
+Ejemplo: si hoy es **Q3 2026** (en curso, sin cerrar), los pills muestran **Q3 2025, Q4 2025, Q1 2026, Q2 2026**, y el dashboard abre por defecto en **Q2 2026** (el último cerrado).
+
+El cierre de un proyecto en un trimestre lo define la columna **`qFin`** de sus datos — desde ahí se calculan todas las métricas del período.
 
 ---
 
