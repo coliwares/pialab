@@ -238,18 +238,6 @@
     color: var(--text-3);
   }
 
-  .select-filter {
-    padding: 6px 10px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--text);
-    font-size: 12px;
-    font-family: inherit;
-    font-weight: 500;
-    cursor: pointer;
-  }
-
   /* ── Main ────────────────────────────────────────────────── */
   main { padding: 20px 28px 48px; }
 
@@ -463,12 +451,6 @@
   .tag-rev      { background: #F3F4F6; color: #374151; }
   .tag-release  { background: #EDE9FE; color: #5B21B6; }
 
-  .tag-alta   { background: #FEE2E2; color: #B91C1C; }
-  .tag-media  { background: #FEF3C7; color: #92400E; }
-  .tag-baja   { background: #D1FAE5; color: #065F46; }
-  .tag-listo  { background: #D1FAE5; color: #065F46; }
-  .tag-noapl  { background: #F3F4F6; color: #374151; }
-
   .num { text-align: right; }
 
   /* ── Insight box ─────────────────────────────────────────── */
@@ -551,12 +533,6 @@
       <button class="pill" data-type="Incremental" onclick="setType(this)">Incremental <span class="pill-count" id="cnt-incremental">—</span></button>
       <button class="pill" data-type="Revisión general" onclick="setType(this)">Revisión general <span class="pill-count" id="cnt-revision">—</span></button>
     </div>
-    <select class="select-filter" id="complexityFilter" onchange="applyFilters()">
-      <option value="">Todas las complejidades</option>
-      <option value="Alta">Alta</option>
-      <option value="Media">Media</option>
-      <option value="Baja">Baja</option>
-    </select>
   </div>
 </div>
 
@@ -671,7 +647,6 @@
             <tr>
               <th onclick="sortTable('proyecto')">Proyecto ↕</th>
               <th onclick="sortTable('tipo')">Tipo ↕</th>
-              <th onclick="sortTable('complejidad')">Complejidad ↕</th>
               <th onclick="sortTable('qFin')">Q Fin ↕</th>
               <th onclick="sortTable('tiempoCiclo')" class="num">Ciclo (días) ↕</th>
               <th onclick="sortTable('cpEjecutado')" class="num">CP Ejec. ↕</th>
@@ -680,7 +655,6 @@
               <th onclick="sortTable('defectos')" class="num">Defectos ↕</th>
               <th onclick="sortTable('totalTasaDefectos')" class="num">Tasa def. ↕</th>
               <th onclick="sortTable('tasaDevolucion')" class="num">Tasa dev. ↕</th>
-              <th>Estado</th>
             </tr>
           </thead>
           <tbody id="projBody"></tbody>
@@ -830,7 +804,6 @@ const CLOSED_QUARTERS = lastClosedQuarters(4);
 // ════════════════════════════════════════════════════════════════════════
 let currentPeriod = CLOSED_QUARTERS[CLOSED_QUARTERS.length - 1]; // default = último Q cerrado
 let currentType   = '';         // '' = Todos, else: 'Web','Mobile','Release','Incremental','Revisión general'
-let currentComplexity = '';
 let sortKey = 'qFin';
 let sortAsc = true;
 let tableSearch = '';
@@ -861,12 +834,7 @@ function getBasePeriodProjects() {
 }
 
 function getFilteredProjects() {
-  const comp = document.getElementById('complexityFilter').value;
-  return getBasePeriodProjects().filter(p => {
-    const typeMatch = matchType(p, currentType);
-    const compMatch = !comp || p.complejidad === comp;
-    return typeMatch && compMatch;
-  });
+  return getBasePeriodProjects().filter(p => matchType(p, currentType));
 }
 
 function matchPeriod(p, period) {
@@ -895,7 +863,6 @@ function setType(el) {
 }
 
 function applyFilters() {
-  currentComplexity = document.getElementById('complexityFilter').value;
   renderAll();
 }
 
@@ -1165,14 +1132,21 @@ function renderChartTipos(projects) {
 
 function counts_nonempty(i, arr) { return arr[i] > 0; }
 
+// Serie fija para los 4 gráficos de tendencia: siempre Proyectos (todos),
+// Web, Mobile e Incremental — independiente del pill de Tipo seleccionado.
+const TREND_SERIES = [
+  { label: 'Proyectos',   pred: () => true,                   color: '#0F1C2E' },
+  { label: 'Web',         pred: p => p.tipo === 'Web',         color: '#1B6EF3' },
+  { label: 'Mobile',      pred: p => p.tipo === 'Mobile',      color: '#7C3AED' },
+  { label: 'Incremental', pred: p => p.tipo === 'Incremental', color: '#D97706' },
+];
+
 function renderChartTasaDefectos(projects) {
   destroyChart('tasadef');
   const ctx = document.getElementById('chartTasaDefectos').getContext('2d');
   const quarters = CLOSED_QUARTERS;
-  const avgBy = (q, typeKey) => {
-    const ps = ALL_PROJECTS.filter(p => {
-      return p.qFin === q && p.statusQA === 'Listo' && p.totalTasaDefectos > 0 && matchType(p, typeKey);
-    });
+  const avgBy = (q, pred) => {
+    const ps = ALL_PROJECTS.filter(p => p.qFin === q && p.statusQA === 'Listo' && p.totalTasaDefectos > 0 && pred(p));
     return ps.length ? ps.reduce((a,p)=>a+p.totalTasaDefectos,0)/ps.length : 0;
   };
 
@@ -1180,14 +1154,11 @@ function renderChartTasaDefectos(projects) {
     type: 'bar',
     data: {
       labels: quarters,
-      datasets: [
-        {label:'Web',     data: quarters.map(q=>avgBy(q,'Web')),     backgroundColor:'#1B6EF3'},
-        {label:'Release', data: quarters.map(q=>avgBy(q,'Release')), backgroundColor:'#7C3AED'},
-        {label:'Otras',   data: quarters.map(q=>{
-          const ps = ALL_PROJECTS.filter(p=>p.qFin===q&&p.statusQA==='Listo'&&p.totalTasaDefectos>0&&!matchType(p,'Web')&&!matchType(p,'Release'));
-          return ps.length ? ps.reduce((a,p)=>a+p.totalTasaDefectos,0)/ps.length : 0;
-        }), backgroundColor:'#D97706'},
-      ]
+      datasets: TREND_SERIES.map(s => ({
+        label: s.label,
+        data: quarters.map(q => avgBy(q, s.pred)),
+        backgroundColor: s.color,
+      })),
     },
     options: {
       responsive: true, maintainAspectRatio: false,
@@ -1204,8 +1175,8 @@ function renderChartCiclo(projects) {
   destroyChart('ciclo');
   const ctx = document.getElementById('chartCiclo').getContext('2d');
   const quarters = CLOSED_QUARTERS;
-  const avgCiclo = (q, typeKey) => {
-    const ps = ALL_PROJECTS.filter(p=>p.qFin===q&&p.statusQA==='Listo'&&p.tiempoCiclo>0&&p.tiempoCiclo<120&&matchType(p,typeKey));
+  const avgCiclo = (q, pred) => {
+    const ps = ALL_PROJECTS.filter(p=>p.qFin===q&&p.statusQA==='Listo'&&p.tiempoCiclo>0&&p.tiempoCiclo<120&&pred(p));
     return ps.length ? Math.round(ps.reduce((a,p)=>a+p.tiempoCiclo,0)/ps.length) : 0;
   };
 
@@ -1213,10 +1184,11 @@ function renderChartCiclo(projects) {
     type: 'bar',
     data: {
       labels: quarters,
-      datasets: [
-        {label:'Web',     data: quarters.map(q=>avgCiclo(q,'Web')),     backgroundColor:'#1B6EF3'},
-        {label:'Release', data: quarters.map(q=>avgCiclo(q,'Release')), backgroundColor:'#7C3AED'},
-      ]
+      datasets: TREND_SERIES.map(s => ({
+        label: s.label,
+        data: quarters.map(q => avgCiclo(q, s.pred)),
+        backgroundColor: s.color,
+      })),
     },
     options: {
       responsive: true, maintainAspectRatio: false,
@@ -1233,8 +1205,8 @@ function renderChartTasaDevolucion(projects) {
   destroyChart('tasadev');
   const ctx = document.getElementById('chartTasaDevolucion').getContext('2d');
   const quarters = CLOSED_QUARTERS;
-  const avgBy = (q, typeKey) => {
-    const ps = ALL_PROJECTS.filter(p => p.qFin === q && p.statusQA === 'Listo' && matchType(p, typeKey));
+  const avgBy = (q, pred) => {
+    const ps = ALL_PROJECTS.filter(p => p.qFin === q && p.statusQA === 'Listo' && pred(p));
     return ps.length ? ps.reduce((a,p)=>a+p.tasaDevolucion,0)/ps.length*100 : 0;
   };
 
@@ -1242,14 +1214,11 @@ function renderChartTasaDevolucion(projects) {
     type: 'bar',
     data: {
       labels: quarters,
-      datasets: [
-        {label:'Web',     data: quarters.map(q=>avgBy(q,'Web')),     backgroundColor:'#1B6EF3'},
-        {label:'Release', data: quarters.map(q=>avgBy(q,'Release')), backgroundColor:'#7C3AED'},
-        {label:'Otras',   data: quarters.map(q=>{
-          const ps = ALL_PROJECTS.filter(p=>p.qFin===q&&p.statusQA==='Listo'&&!matchType(p,'Web')&&!matchType(p,'Release'));
-          return ps.length ? ps.reduce((a,p)=>a+p.tasaDevolucion,0)/ps.length*100 : 0;
-        }), backgroundColor:'#D97706'},
-      ]
+      datasets: TREND_SERIES.map(s => ({
+        label: s.label,
+        data: quarters.map(q => avgBy(q, s.pred)),
+        backgroundColor: s.color,
+      })),
     },
     options: {
       responsive: true, maintainAspectRatio: false,
@@ -1266,8 +1235,8 @@ function renderChartCicloTicket(projects) {
   destroyChart('cicloticket');
   const ctx = document.getElementById('chartCicloTicket').getContext('2d');
   const quarters = CLOSED_QUARTERS;
-  const avgCiclo = (q, typeKey) => {
-    const ps = ALL_PROJECTS.filter(p=>p.qFin===q&&p.statusQA==='Listo'&&p.promDiasCicloTicket>0&&matchType(p,typeKey));
+  const avgCiclo = (q, pred) => {
+    const ps = ALL_PROJECTS.filter(p=>p.qFin===q&&p.statusQA==='Listo'&&p.promDiasCicloTicket>0&&pred(p));
     return ps.length ? Math.round(ps.reduce((a,p)=>a+p.promDiasCicloTicket,0)/ps.length) : 0;
   };
 
@@ -1275,10 +1244,11 @@ function renderChartCicloTicket(projects) {
     type: 'bar',
     data: {
       labels: quarters,
-      datasets: [
-        {label:'Web',     data: quarters.map(q=>avgCiclo(q,'Web')),     backgroundColor:'#1B6EF3'},
-        {label:'Release', data: quarters.map(q=>avgCiclo(q,'Release')), backgroundColor:'#7C3AED'},
-      ]
+      datasets: TREND_SERIES.map(s => ({
+        label: s.label,
+        data: quarters.map(q => avgCiclo(q, s.pred)),
+        backgroundColor: s.color,
+      })),
     },
     options: {
       responsive: true, maintainAspectRatio: false,
@@ -1300,14 +1270,6 @@ function tagTipo(p) {
     Iteración:'tag-iter',Incremental:'tag-incr','Revisión general':'tag-rev'}[p.tipo]||'tag-rev';
   return `<span class="tag ${cls}">${p.tipo}</span>`;
 }
-function tagComp(c) {
-  const cls = {Alta:'tag-alta',Media:'tag-media',Baja:'tag-baja'}[c]||'';
-  return `<span class="tag ${cls}">${c}</span>`;
-}
-function tagStatus(s) {
-  return `<span class="tag ${s==='Listo'?'tag-listo':'tag-noapl'}">${s}</span>`;
-}
-
 function sortTable(key) {
   if (sortKey === key) sortAsc = !sortAsc;
   else { sortKey = key; sortAsc = true; }
@@ -1333,7 +1295,6 @@ function renderTable(projects) {
     <tr>
       <td style="max-width:220px;white-space:normal;line-height:1.3;">${p.proyecto}</td>
       <td>${tagTipo(p)}</td>
-      <td>${tagComp(p.complejidad)}</td>
       <td>${p.qFin||'—'}</td>
       <td class="num">${p.tiempoCiclo||'—'}</td>
       <td class="num">${(p.cpEjecutado||0).toLocaleString()}</td>
@@ -1342,9 +1303,8 @@ function renderTable(projects) {
       <td class="num">${(p.defectos||0).toLocaleString()}</td>
       <td class="num">${typeof p.totalTasaDefectos==='number'?p.totalTasaDefectos.toFixed(1)+'%':'—'}</td>
       <td class="num">${fmtTasa(p.tasaDevolucion)}</td>
-      <td>${tagStatus(p.statusQA)}</td>
     </tr>
-  `).join('') : `<tr><td colspan="12" class="empty">Sin resultados para este filtro.</td></tr>`;
+  `).join('') : `<tr><td colspan="10" class="empty">Sin resultados para este filtro.</td></tr>`;
 }
 
 // ════════════════════════════════════════════════════════════════════════
