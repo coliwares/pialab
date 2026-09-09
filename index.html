@@ -625,6 +625,23 @@
         </div>
       </div>
     </div>
+
+    <div style="margin-top:16px;" class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-title">Promedio tasa de devolución de tickets</div>
+        <div class="chart-sub">Por trimestre y tipo</div>
+        <div class="chart-wrap" style="height:180px;">
+          <canvas id="chartTasaDevolucion"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Promedio ciclo de vida del ticket</div>
+        <div class="chart-sub">Días promedio por trimestre</div>
+        <div class="chart-wrap" style="height:180px;">
+          <canvas id="chartCicloTicket"></canvas>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- PROYECTOS TABLE -->
@@ -1164,6 +1181,68 @@ function renderChartCiclo(projects) {
   });
 }
 
+function renderChartTasaDevolucion(projects) {
+  destroyChart('tasadev');
+  const ctx = document.getElementById('chartTasaDevolucion').getContext('2d');
+  const quarters = CLOSED_QUARTERS;
+  const avgBy = (q, typeKey) => {
+    const ps = ALL_PROJECTS.filter(p => p.qFin === q && p.statusQA === 'Listo' && matchType(p, typeKey));
+    return ps.length ? ps.reduce((a,p)=>a+p.tasaDevolucion,0)/ps.length*100 : 0;
+  };
+
+  charts['tasadev'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: quarters,
+      datasets: [
+        {label:'Web',     data: quarters.map(q=>avgBy(q,'Web')),     backgroundColor:'#1B6EF3'},
+        {label:'Release', data: quarters.map(q=>avgBy(q,'Release')), backgroundColor:'#7C3AED'},
+        {label:'Otras',   data: quarters.map(q=>{
+          const ps = ALL_PROJECTS.filter(p=>p.qFin===q&&p.statusQA==='Listo'&&!matchType(p,'Web')&&!matchType(p,'Release'));
+          return ps.length ? ps.reduce((a,p)=>a+p.tasaDevolucion,0)/ps.length*100 : 0;
+        }), backgroundColor:'#D97706'},
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels:{boxWidth:8,padding:8,font:{size:9}} } },
+      scales: {
+        x: { ticks:{font:{size:9}}, grid:{display:false} },
+        y: { ticks:{font:{size:9}, callback: v=>v.toFixed(0)+'%'} }
+      }
+    }
+  });
+}
+
+function renderChartCicloTicket(projects) {
+  destroyChart('cicloticket');
+  const ctx = document.getElementById('chartCicloTicket').getContext('2d');
+  const quarters = CLOSED_QUARTERS;
+  const avgCiclo = (q, typeKey) => {
+    const ps = ALL_PROJECTS.filter(p=>p.qFin===q&&p.statusQA==='Listo'&&p.promDiasCicloTicket>0&&matchType(p,typeKey));
+    return ps.length ? Math.round(ps.reduce((a,p)=>a+p.promDiasCicloTicket,0)/ps.length) : 0;
+  };
+
+  charts['cicloticket'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: quarters,
+      datasets: [
+        {label:'Web',     data: quarters.map(q=>avgCiclo(q,'Web')),     backgroundColor:'#1B6EF3'},
+        {label:'Release', data: quarters.map(q=>avgCiclo(q,'Release')), backgroundColor:'#7C3AED'},
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels:{boxWidth:8,padding:8,font:{size:9}} } },
+      scales: {
+        x: { ticks:{font:{size:9}}, grid:{display:false} },
+        y: { ticks:{font:{size:9}, callback: v=>v+' d'} }
+      }
+    }
+  });
+}
+
 // ════════════════════════════════════════════════════════════════════════
 // TABLE
 // ════════════════════════════════════════════════════════════════════════
@@ -1232,6 +1311,8 @@ function renderAll() {
   renderChartTipos(projects);
   renderChartTasaDefectos(projects);
   renderChartCiclo(projects);
+  renderChartTasaDevolucion(projects);
+  renderChartCicloTicket(projects);
   renderTable(projects);
 }
 
